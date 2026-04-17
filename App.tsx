@@ -12,8 +12,18 @@ import {
   View,
 } from 'react-native'
 
+type TabType = 'home' | 'wardrobe' | 'ai' | 'community' | 'settings'
+
+interface SelectedClothes {
+  top?: string
+  bottom?: string
+  outer?: string
+}
+
 export default function App() {
   const [screen, setScreen] = useState<'login' | 'main'>('login')
+  const [activeTab, setActiveTab] = useState<TabType>('home')
+  const [selectedClothes, setSelectedClothes] = useState<SelectedClothes>({})
   const fadeAnim = useRef(new Animated.Value(1)).current
 
   const handleLogin = () => {
@@ -29,6 +39,28 @@ export default function App() {
         useNativeDriver: true,
       }).start()
     })
+  }
+
+  const renderMainContent = () => {
+    switch (activeTab) {
+      case 'home':
+        return <HomeScreen selectedClothes={selectedClothes} />
+      case 'wardrobe':
+        return (
+          <WardrobeScreen
+            onSelectClothes={(clothes) => {
+              setSelectedClothes((prev) => ({ ...prev, ...clothes }))
+              setActiveTab('home')
+            }}
+          />
+        )
+      case 'ai':
+        return <AIRecommendScreen />
+      case 'community':
+        return <CommunityScreen />
+      case 'settings':
+        return <SettingsScreen />
+    }
   }
 
   return (
@@ -107,57 +139,41 @@ export default function App() {
             </>
           ) : (
             <>
-              <View style={styles.mainHeader}>
-                <View>
-                  <Text style={styles.mainTitle}>user의 옷장</Text>
-                  <Text style={styles.mainSubtitle}>오늘의 코디를 선택해보세요</Text>
-                </View>
-                <View style={styles.profileIcon}>
-                  <Text style={styles.profileIconText}>U</Text>
-                </View>
+              <View style={styles.mainContentWrapper}>
+                {renderMainContent()}
               </View>
 
-              <ScrollView
-                style={styles.gridWrap}
-                contentContainerStyle={styles.gridContent}
-                showsVerticalScrollIndicator={false}
-              >
-                {[
-                  '검정 셔츠',
-                  '청바지',
-                  '화이트 셔츠',
-                  '네이비 자켓',
-                  '그레이 슬랙스',
-                  '스니커즈',
-                ].map((item) => (
-                  <View key={item} style={styles.gridItem}>
-                    <View style={styles.dummyImage} />
-                    <Text style={styles.itemLabel}>{item}</Text>
-                  </View>
-                ))}
-              </ScrollView>
-
               <View style={styles.bottomNav}>
-                <Pressable style={styles.navItem}>
-                  <Text style={[styles.navIcon, styles.navIconInactive]}>⌂</Text>
-                  <Text style={[styles.navLabel, styles.navLabelInactive]}>홈</Text>
-                </Pressable>
-                <Pressable style={styles.navItem}>
-                  <Text style={[styles.navIcon, styles.navIconInactive]}>🧍</Text>
-                  <Text style={[styles.navLabel, styles.navLabelInactive]}>옷 입히기</Text>
-                </Pressable>
-                <Pressable style={styles.navItem}>
-                  <Text style={[styles.navIcon, styles.navIconActive]}>🗄</Text>
-                  <Text style={[styles.navLabel, styles.navLabelActive]}>옷장</Text>
-                </Pressable>
-                <Pressable style={styles.navItem}>
-                  <Text style={[styles.navIcon, styles.navIconInactive]}>✦</Text>
-                  <Text style={[styles.navLabel, styles.navLabelInactive]}>AI 추천</Text>
-                </Pressable>
-                <Pressable style={styles.navItem}>
-                  <Text style={[styles.navIcon, styles.navIconInactive]}>⚖</Text>
-                  <Text style={[styles.navLabel, styles.navLabelInactive]}>체형 수정</Text>
-                </Pressable>
+                <TabButton
+                  icon="🏠"
+                  label="홈"
+                  isActive={activeTab === 'home'}
+                  onPress={() => setActiveTab('home')}
+                />
+                <TabButton
+                  icon="🧥"
+                  label="옷장"
+                  isActive={activeTab === 'wardrobe'}
+                  onPress={() => setActiveTab('wardrobe')}
+                />
+                <TabButton
+                  icon="✨"
+                  label="AI 추천"
+                  isActive={activeTab === 'ai'}
+                  onPress={() => setActiveTab('ai')}
+                />
+                <TabButton
+                  icon="💬"
+                  label="커뮤니티"
+                  isActive={activeTab === 'community'}
+                  onPress={() => setActiveTab('community')}
+                />
+                <TabButton
+                  icon="⚙️"
+                  label="설정"
+                  isActive={activeTab === 'settings'}
+                  onPress={() => setActiveTab('settings')}
+                />
               </View>
             </>
           )}
@@ -182,12 +198,12 @@ const styles = StyleSheet.create({
   phoneFrame: {
     width: '100%',
     maxWidth: 360,
-    minHeight: 640,
+    height: 640,
     backgroundColor: '#ffffff',
     borderRadius: 30,
     paddingHorizontal: 24,
     paddingTop: 30,
-    paddingBottom: 24,
+    paddingBottom: 0,
     borderWidth: 1,
     borderColor: '#dbe3f0',
     shadowColor: '#1e2a44',
@@ -195,6 +211,8 @@ const styles = StyleSheet.create({
     shadowRadius: 22,
     shadowOffset: { width: 0, height: 12 },
     elevation: 10,
+    overflow: 'hidden',
+    flexDirection: 'column',
   },
   header: {
     gap: 7,
@@ -365,12 +383,13 @@ const styles = StyleSheet.create({
   },
   gridWrap: {
     flex: 1,
+    overflow: 'hidden',
   },
   gridContent: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    paddingBottom: 16,
+    paddingBottom: 90,
     gap: 12,
   },
   gridItem: {
@@ -389,9 +408,40 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
+  tryButton: {
+    backgroundColor: '#A062FF',
+    paddingVertical: 6,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  tryButtonText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  screenContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  screenContent: {
+    flex: 1,
+    overflow: 'hidden',
+  },
+  mainContentWrapper: {
+    flex: 1,
+    overflow: 'hidden',
+  },
+  screenTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#0f2a5f',
+  },
   bottomNav: {
-    marginTop: 8,
     paddingTop: 10,
+    paddingHorizontal: 24,
+    paddingBottom: 24,
     borderTopWidth: 1,
     borderTopColor: '#d8e0ec',
     flexDirection: 'row',
@@ -422,3 +472,276 @@ const styles = StyleSheet.create({
     color: '#A062FF',
   },
 })
+
+// Tab Button Component
+interface TabButtonProps {
+  icon: string
+  label: string
+  isActive: boolean
+  onPress: () => void
+}
+
+function TabButton({ icon, label, isActive, onPress }: TabButtonProps) {
+  return (
+    <Pressable style={styles.navItem} onPress={onPress}>
+      <Text style={[styles.navIcon, isActive ? styles.navIconActive : styles.navIconInactive]}>
+        {icon}
+      </Text>
+      <Text style={[styles.navLabel, isActive ? styles.navLabelActive : styles.navLabelInactive]}>
+        {label}
+      </Text>
+    </Pressable>
+  )
+}
+
+// Home Screen Styles
+const homeStyles = StyleSheet.create({
+  homeScreen: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  greetingText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0f2a5f',
+  },
+  weatherText: {
+    fontSize: 16,
+    color: '#0f2a5f',
+    fontWeight: '600',
+  },
+  fittingRoomContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  avatarBox: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#ffffff',
+    borderWidth: 2,
+    borderColor: '#A062FF',
+    borderRadius: 12,
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+  },
+  clothesDisplay: {
+    alignItems: 'center',
+    gap: 10,
+  },
+  clothesLabel: {
+    fontSize: 11,
+    color: '#0f2a5f',
+    fontWeight: '600',
+  },
+  clothesName: {
+    fontSize: 13,
+    color: '#A062FF',
+    fontWeight: '700',
+  },
+  noClothesMessage: {
+    fontSize: 14,
+    color: '#6f7d96',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  ootdCard: {
+    backgroundColor: 'rgba(160, 98, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: '#A062FF',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    gap: 6,
+    marginTop: 6,
+  },
+  ootdLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#0f2a5f',
+  },
+  ootdItemRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  ootdDummy: {
+    flex: 1,
+    height: 50,
+    backgroundColor: '#e8ecf6',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#d8e0ec',
+  },
+})
+
+// Home Screen
+interface HomeScreenProps {
+  selectedClothes: SelectedClothes
+}
+
+function HomeScreen({ selectedClothes }: HomeScreenProps) {
+  const hasClothes =
+    selectedClothes.top || selectedClothes.bottom || selectedClothes.outer
+
+  return (
+    <View style={homeStyles.homeScreen}>
+      {/* 상단 헤더 */}
+      <View style={homeStyles.headerRow}>
+        <Text style={homeStyles.greetingText}>user님 환영합니다.</Text>
+        <Text style={homeStyles.weatherText}>☀️ 22°C</Text>
+      </View>
+
+      {/* 중앙 아바타 영역 - 화면의 80% */}
+      <View style={homeStyles.fittingRoomContainer}>
+        <View style={homeStyles.avatarBox}>
+          {hasClothes ? (
+            <View style={homeStyles.clothesDisplay}>
+              {selectedClothes.outer && (
+                <View>
+                  <Text style={homeStyles.clothesLabel}>아우터</Text>
+                  <Text style={homeStyles.clothesName}>{selectedClothes.outer}</Text>
+                </View>
+              )}
+              {selectedClothes.top && (
+                <View>
+                  <Text style={homeStyles.clothesLabel}>상의</Text>
+                  <Text style={homeStyles.clothesName}>{selectedClothes.top}</Text>
+                </View>
+              )}
+              {selectedClothes.bottom && (
+                <View>
+                  <Text style={homeStyles.clothesLabel}>하의</Text>
+                  <Text style={homeStyles.clothesName}>{selectedClothes.bottom}</Text>
+                </View>
+              )}
+            </View>
+          ) : (
+            <Text style={homeStyles.noClothesMessage}>
+              옷장에서 옷을 골라주세요
+            </Text>
+          )}
+        </View>
+      </View>
+
+      {/* 하단 저장된 코디 세트 */}
+      <View style={homeStyles.ootdCard}>
+        <Text style={homeStyles.ootdLabel}>저장된 코디 세트</Text>
+        <View style={homeStyles.ootdItemRow}>
+          <Pressable style={homeStyles.ootdDummy}>
+            <Text style={{ color: '#0f2a5f', fontWeight: '700', fontSize: 12 }}>
+              [1]
+            </Text>
+          </Pressable>
+          <Pressable style={homeStyles.ootdDummy}>
+            <Text style={{ color: '#0f2a5f', fontWeight: '700', fontSize: 12 }}>
+              [2]
+            </Text>
+          </Pressable>
+          <Pressable style={homeStyles.ootdDummy}>
+            <Text style={{ color: '#0f2a5f', fontWeight: '700', fontSize: 12 }}>
+              [3]
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+    </View>
+  )
+}
+
+// Wardrobe Screen (기존 옷 리스트)
+interface WardrobeScreenProps {
+  onSelectClothes: (clothes: Partial<SelectedClothes>) => void
+}
+
+interface ClothingItem {
+  name: string
+  type: 'top' | 'bottom' | 'outer'
+}
+
+function WardrobeScreen({ onSelectClothes }: WardrobeScreenProps) {
+  const clothingItems: ClothingItem[] = [
+    { name: '검정 셔츠', type: 'top' },
+    { name: '청바지', type: 'bottom' },
+    { name: '화이트 셔츠', type: 'top' },
+    { name: '네이비 자켓', type: 'outer' },
+    { name: '그레이 슬랙스', type: 'bottom' },
+    { name: '스니커즈', type: 'outer' },
+  ]
+
+  const handleSelectClothing = (item: ClothingItem) => {
+    const clothesData: Partial<SelectedClothes> = {}
+    clothesData[item.type] = item.name
+    onSelectClothes(clothesData)
+  }
+
+  return (
+    <View style={styles.screenContent}>
+      <View style={styles.mainHeader}>
+        <View>
+          <Text style={styles.mainTitle}>user의 옷장</Text>
+          <Text style={styles.mainSubtitle}>옷을 선택해 입어보세요</Text>
+        </View>
+        <View style={styles.profileIcon}>
+          <Text style={styles.profileIconText}>U</Text>
+        </View>
+      </View>
+
+      <ScrollView
+        style={styles.gridWrap}
+        contentContainerStyle={styles.gridContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {clothingItems.map((item) => (
+          <View key={item.name} style={styles.gridItem}>
+            <View style={styles.dummyImage} />
+            <Text style={styles.itemLabel}>{item.name}</Text>
+            <Pressable
+              style={styles.tryButton}
+              onPress={() => handleSelectClothing(item)}
+            >
+              <Text style={styles.tryButtonText}>입어보기</Text>
+            </Pressable>
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  )
+}
+
+// AI Recommend Screen
+function AIRecommendScreen() {
+  return (
+    <View style={styles.screenContainer}>
+      <Text style={styles.screenTitle}>AI 추천 화면입니다</Text>
+    </View>
+  )
+}
+
+// Community Screen
+function CommunityScreen() {
+  return (
+    <View style={styles.screenContainer}>
+      <Text style={styles.screenTitle}>커뮤니티 화면입니다</Text>
+    </View>
+  )
+}
+
+// Settings Screen
+function SettingsScreen() {
+  return (
+    <View style={styles.screenContainer}>
+      <Text style={styles.screenTitle}>설정 화면입니다</Text>
+    </View>
+  )
+}
