@@ -1,4 +1,4 @@
-import { StatusBar } from 'expo-status-bar'
+﻿import { StatusBar } from 'expo-status-bar'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useRef, useState } from 'react'
 import {
@@ -110,7 +110,7 @@ export default function App() {
               <View style={styles.bottomAction}>
                 <Pressable style={styles.primaryButton} onPress={handleLogin}>
                   <LinearGradient
-                    colors={['#0f2a5f', '#8b75ff']}
+                    colors={['#0A1931', '#0A1931']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={styles.primaryButtonGradient}
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#8b75ff',
+    backgroundColor: '#0A1931',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -240,16 +240,16 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0f2a5f',
+    color: '#0A1931',
   },
   title: {
     fontSize: 34,
     fontWeight: '700',
-    color: '#0f2a5f',
+    color: '#0A1931',
     letterSpacing: -0.6,
   },
   subtitle: {
-    color: '#6f7d96',
+    color: '#0A1931',
     fontSize: 14,
     marginBottom: 6,
   },
@@ -274,12 +274,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   linkText: {
-    color: '#5b6f93',
+    color: '#0A1931',
     fontSize: 13,
     fontWeight: '600',
   },
   signUpLinkText: {
-    color: '#8B75FF',
+    color: '#0A1931',
   },
   bottomAction: {
     marginTop: 'auto',
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#d8e0ec',
   },
   dividerText: {
-    color: '#7e8ba5',
+    color: '#0A1931',
     fontSize: 12,
     fontWeight: '600',
   },
@@ -358,13 +358,13 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   mainTitle: {
-    color: '#0f2a5f',
+    color: '#0A1931',
     fontSize: 26,
     fontWeight: '700',
     letterSpacing: -0.4,
   },
   mainSubtitle: {
-    color: '#6f7d96',
+    color: '#0A1931',
     marginTop: 4,
     fontSize: 13,
   },
@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: '#A062FF',
+    backgroundColor: '#0A1931',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   tryButton: {
-    backgroundColor: '#A062FF',
+    backgroundColor: '#0A1931',
     paddingVertical: 6,
     borderRadius: 8,
     alignItems: 'center',
@@ -436,7 +436,7 @@ const styles = StyleSheet.create({
   screenTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#0f2a5f',
+    color: '#0A1931',
   },
   bottomNav: {
     paddingTop: 10,
@@ -456,20 +456,20 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   navIconActive: {
-    color: '#A062FF',
+    color: '#0A1931',
   },
   navIconInactive: {
-    color: '#94a3b8',
+    color: '#0A1931',
   },
   navLabel: {
     fontSize: 10,
     fontWeight: '600',
   },
   navLabelInactive: {
-    color: '#94a3b8',
+    color: '#0A1931',
   },
   navLabelActive: {
-    color: '#A062FF',
+    color: '#0A1931',
   },
 })
 
@@ -511,11 +511,11 @@ const homeStyles = StyleSheet.create({
   greetingText: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#0f2a5f',
+    color: '#0A1931',
   },
   weatherText: {
     fontSize: 16,
-    color: '#0f2a5f',
+    color: '#0A1931',
     fontWeight: '600',
   },
   fittingRoomContainer: {
@@ -529,7 +529,7 @@ const homeStyles = StyleSheet.create({
     height: '100%',
     backgroundColor: '#ffffff',
     borderWidth: 2,
-    borderColor: '#A062FF',
+    borderColor: '#0A1931',
     borderRadius: 12,
     borderStyle: 'dashed',
     justifyContent: 'center',
@@ -542,24 +542,24 @@ const homeStyles = StyleSheet.create({
   },
   clothesLabel: {
     fontSize: 11,
-    color: '#0f2a5f',
+    color: '#0A1931',
     fontWeight: '600',
   },
   clothesName: {
     fontSize: 13,
-    color: '#A062FF',
+    color: '#0A1931',
     fontWeight: '700',
   },
   noClothesMessage: {
     fontSize: 14,
-    color: '#6f7d96',
+    color: '#0A1931',
     fontWeight: '600',
     textAlign: 'center',
   },
   ootdCard: {
-    backgroundColor: 'rgba(160, 98, 255, 0.08)',
+    backgroundColor: 'rgba(10, 25, 49, 0.08)',
     borderWidth: 1,
-    borderColor: '#A062FF',
+    borderColor: '#0A1931',
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -569,7 +569,7 @@ const homeStyles = StyleSheet.create({
   ootdLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#0f2a5f',
+    color: '#0A1931',
   },
   ootdItemRow: {
     flexDirection: 'row',
@@ -639,17 +639,17 @@ function HomeScreen({ selectedClothes }: HomeScreenProps) {
         <Text style={homeStyles.ootdLabel}>저장된 코디 세트</Text>
         <View style={homeStyles.ootdItemRow}>
           <Pressable style={homeStyles.ootdDummy}>
-            <Text style={{ color: '#0f2a5f', fontWeight: '700', fontSize: 12 }}>
+            <Text style={{ color: '#0A1931', fontWeight: '700', fontSize: 12 }}>
               [1]
             </Text>
           </Pressable>
           <Pressable style={homeStyles.ootdDummy}>
-            <Text style={{ color: '#0f2a5f', fontWeight: '700', fontSize: 12 }}>
+            <Text style={{ color: '#0A1931', fontWeight: '700', fontSize: 12 }}>
               [2]
             </Text>
           </Pressable>
           <Pressable style={homeStyles.ootdDummy}>
-            <Text style={{ color: '#0f2a5f', fontWeight: '700', fontSize: 12 }}>
+            <Text style={{ color: '#0A1931', fontWeight: '700', fontSize: 12 }}>
               [3]
             </Text>
           </Pressable>
@@ -745,3 +745,4 @@ function SettingsScreen() {
     </View>
   )
 }
+
