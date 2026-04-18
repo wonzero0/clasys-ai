@@ -10,9 +10,10 @@ import {
   Text,
   TextInput,
   View,
+  Image,
 } from 'react-native'
 
-type TabType = 'home' | 'wardrobe' | 'ai' | 'community' | 'settings'
+type TabType = 'home' | 'wardrobe' | 'fitlab' | 'social' | 'settings'
 
 interface SelectedClothes {
   top?: string
@@ -54,10 +55,10 @@ export default function App() {
             }}
           />
         )
-      case 'ai':
-        return <AIRecommendScreen />
-      case 'community':
-        return <CommunityScreen />
+      case 'fitlab':
+        return <FitLabScreen />
+      case 'social':
+        return <SocialScreen />
       case 'settings':
         return <SettingsScreen />
     }
@@ -145,10 +146,10 @@ export default function App() {
 
               <View style={styles.bottomNav}>
                 <TabButton
-                  icon="🏠"
-                  label="홈"
-                  isActive={activeTab === 'home'}
-                  onPress={() => setActiveTab('home')}
+                  icon="📊"
+                  label="핏 랩"
+                  isActive={activeTab === 'fitlab'}
+                  onPress={() => setActiveTab('fitlab')}
                 />
                 <TabButton
                   icon="🧥"
@@ -157,16 +158,16 @@ export default function App() {
                   onPress={() => setActiveTab('wardrobe')}
                 />
                 <TabButton
-                  icon="✨"
-                  label="AI 추천"
-                  isActive={activeTab === 'ai'}
-                  onPress={() => setActiveTab('ai')}
+                  icon="🏠"
+                  label="홈"
+                  isActive={activeTab === 'home'}
+                  onPress={() => setActiveTab('home')}
                 />
                 <TabButton
-                  icon="💬"
-                  label="커뮤니티"
-                  isActive={activeTab === 'community'}
-                  onPress={() => setActiveTab('community')}
+                  icon="👥"
+                  label="소셜"
+                  isActive={activeTab === 'social'}
+                  onPress={() => setActiveTab('social')}
                 />
                 <TabButton
                   icon="⚙️"
@@ -197,8 +198,8 @@ const styles = StyleSheet.create({
   },
   phoneFrame: {
     width: '100%',
-    maxWidth: 360,
-    height: 640,
+    maxWidth: 390,
+    height: 790,
     backgroundColor: '#ffffff',
     borderRadius: 30,
     paddingHorizontal: 24,
@@ -284,7 +285,7 @@ const styles = StyleSheet.create({
   bottomAction: {
     marginTop: 'auto',
     paddingTop: 12,
-    marginBottom: 20,
+    marginBottom: 60,
     gap: 14,
   },
   primaryButton: {
@@ -459,14 +460,14 @@ const styles = StyleSheet.create({
     color: '#1E3A8A',
   },
   navIconInactive: {
-    color: '#1E3A8A',
+    color: '#CCCCCC',
   },
   navLabel: {
     fontSize: 10,
     fontWeight: '600',
   },
   navLabelInactive: {
-    color: '#1E3A8A',
+    color: '#CCCCCC',
   },
   navLabelActive: {
     color: '#1E3A8A',
@@ -498,90 +499,264 @@ function TabButton({ icon, label, isActive, onPress }: TabButtonProps) {
 const homeStyles = StyleSheet.create({
   homeScreen: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    backgroundColor: '#FFFFFF',
+    position: 'relative',
   },
-  headerRow: {
+  scrollView: {
+    flex: 1,
+    display: 'none',
+  },
+  scrollContent: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 0,
+    paddingBottom: 0,
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+  },
+  statusBarRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 14,
+    display: 'none',
+  },
+  statusTime: {
+    color: '#1E3A8A',
+    fontWeight: '700',
+    fontSize: 12,
+  },
+  statusIcons: {
+    color: '#1E3A8A',
+    fontSize: 12,
+  },
+  topHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    height: 85,
+    marginBottom: 0,
+  },
+  userSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  userIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#E7FDF4',
+    borderWidth: 1.5,
+    borderColor: '#1E3A8A',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  userIconText: {
+    fontSize: 16,
   },
   greetingText: {
     fontSize: 18,
     fontWeight: '700',
     color: '#1E3A8A',
   },
+  weatherBox: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 18,
+    backgroundColor: '#F8FAFF',
+    borderWidth: 1,
+    borderColor: '#E5E9F2',
+  },
   weatherText: {
-    fontSize: 16,
+    fontSize: 13,
+    fontWeight: '700',
     color: '#1E3A8A',
-    fontWeight: '600',
+  },
+  floatingButtonsContainer: {
+    position: 'absolute',
+    left: 20,
+    top: 110,
+    zIndex: 10,
+  },
+  floatingButtonItem: {
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  floatingButtonCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#1E3A8A',
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#1E3A8A',
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 4,
+  },
+  floatingButtonIcon: {
+    fontSize: 14,
+  },
+  floatingButtonLabel: {
+    marginTop: 3,
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#1E3A8A',
   },
   fittingRoomContainer: {
-    flex: 1,
+    flex: 7,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 6,
+    paddingHorizontal: 8,
+    marginBottom: 0,
+    marginTop: 0,
   },
-  avatarBox: {
+  avatarCard: {
+    width: '100%',
+    maxWidth: 300,
+    height: '100%',
+    borderRadius: 36,
+    backgroundColor: '#F8FAFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#1E3A8A',
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 10,
+    padding: 12,
+  },
+  avatarStage: {
+    width: '100%',
+    flex: 1,
+    borderRadius: 28,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+  },
+  avatarBody: {
+    width: '65%',
+    aspectRatio: 0.58,
+    backgroundColor: '#E6D1B7',
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: 18,
+    shadowColor: '#1E3A8A',
+    shadowOpacity: 0.05,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 6,
+    display: 'none',
+  },
+  avatarHead: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#D6BFA5',
+    marginBottom: 12,
+    display: 'none',
+  },
+  avatarShoulders: {
+    width: '100%',
+    height: 32,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    backgroundColor: '#D1B497',
+    marginBottom: 10,
+    display: 'none',
+  },
+  avatarImage: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#ffffff',
-    borderWidth: 2,
-    borderColor: '#1E3A8A',
-    borderRadius: 12,
-    borderStyle: 'dashed',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 12,
+    borderRadius: 24,
+    resizeMode: 'cover',
   },
-  clothesDisplay: {
-    alignItems: 'center',
+  avatarHintText: {
+    marginTop: 8,
+    fontSize: 10,
+    color: '#5E6C85',
+  },
+  actionRow: {
+    flex: 0.9,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     gap: 10,
+    marginTop: 36,
+    marginBottom: 0,
+    paddingVertical: 0,
   },
-  clothesLabel: {
-    fontSize: 11,
-    color: '#1E3A8A',
-    fontWeight: '600',
-  },
-  clothesName: {
-    fontSize: 13,
-    color: '#1E3A8A',
-    fontWeight: '700',
-  },
-  noClothesMessage: {
-    fontSize: 14,
-    color: '#1E3A8A',
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  ootdCard: {
-    backgroundColor: 'rgba(30, 58, 138, 0.08)',
-    borderWidth: 1,
-    borderColor: '#1E3A8A',
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    gap: 6,
-    marginTop: 6,
-  },
-  ootdLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#1E3A8A',
-  },
-  ootdItemRow: {
+  actionButton: {
+    flex: 1,
+    height: 40,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
     flexDirection: 'row',
     gap: 6,
+    backgroundColor: '#ffffff',
   },
-  ootdDummy: {
-    flex: 1,
-    height: 50,
-    backgroundColor: '#e8ecf6',
-    borderRadius: 8,
+  wardrobeButton: {
+    borderColor: '#1E3A8A',
+  },
+  favoriteButton: {
+    borderColor: '#CBD5E1',
+  },
+  actionButtonIcon: {
+    fontSize: 16,
+  },
+  actionButtonText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1E3A8A',
+  },
+  wardrobeText: {
+    color: '#1E3A8A',
+  },
+  favoriteText: {
+    color: '#6B7280',
+  },
+  categorySection: {
+    flex: 1.9,
+    marginBottom: 0,
+    marginTop: 0,
+    paddingBottom: 4,
+  },
+  categoryScroll: {
+    paddingBottom: 0,
+    paddingLeft: 6,
+  },
+  categoryCard: {
+    width: 70,
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  categoryCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#F8FAFF',
     borderWidth: 1,
-    borderColor: '#d8e0ec',
+    borderColor: '#E5E9F2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  categoryIcon: {
+    fontSize: 24,
+  },
+  categoryLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#1E3A8A',
+    textAlign: 'center',
+    lineHeight: 13,
   },
 })
 
@@ -591,68 +766,114 @@ interface HomeScreenProps {
 }
 
 function HomeScreen({ selectedClothes }: HomeScreenProps) {
-  const hasClothes =
-    selectedClothes.top || selectedClothes.bottom || selectedClothes.outer
+  const [avatarFaceIndex, setAvatarFaceIndex] = useState(0)
+  const startX = useRef<number | null>(null)
+
+  const faceLabels = ['앞모습', '옆모습', '뒷모습']
+  const categories = [
+    { label: '네이비 셔츠', icon: '👔' },
+    { label: '청바지 1', icon: '👖' },
+    { label: '청바지 2', icon: '👖' },
+    { label: '레더 자켓', icon: '🧥' },
+  ]
+
+  const handleResponderGrant = (event: any) => {
+    startX.current = event.nativeEvent.pageX
+  }
+
+  const handleResponderRelease = (event: any) => {
+    if (startX.current === null) {
+      return
+    }
+    const delta = event.nativeEvent.pageX - startX.current
+    if (Math.abs(delta) > 24) {
+      setAvatarFaceIndex((prev) => {
+        if (delta > 0) {
+          return prev === 0 ? 2 : prev - 1
+        }
+        return prev === 2 ? 0 : prev + 1
+      })
+    }
+    startX.current = null
+  }
 
   return (
     <View style={homeStyles.homeScreen}>
-      {/* 상단 헤더 */}
-      <View style={homeStyles.headerRow}>
-        <Text style={homeStyles.greetingText}>user님 환영합니다.</Text>
-        <Text style={homeStyles.weatherText}>☀️ 22°C</Text>
-      </View>
-
-      {/* 중앙 아바타 영역 - 화면의 80% */}
-      <View style={homeStyles.fittingRoomContainer}>
-        <View style={homeStyles.avatarBox}>
-          {hasClothes ? (
-            <View style={homeStyles.clothesDisplay}>
-              {selectedClothes.outer && (
-                <View>
-                  <Text style={homeStyles.clothesLabel}>아우터</Text>
-                  <Text style={homeStyles.clothesName}>{selectedClothes.outer}</Text>
-                </View>
-              )}
-              {selectedClothes.top && (
-                <View>
-                  <Text style={homeStyles.clothesLabel}>상의</Text>
-                  <Text style={homeStyles.clothesName}>{selectedClothes.top}</Text>
-                </View>
-              )}
-              {selectedClothes.bottom && (
-                <View>
-                  <Text style={homeStyles.clothesLabel}>하의</Text>
-                  <Text style={homeStyles.clothesName}>{selectedClothes.bottom}</Text>
-                </View>
-              )}
+      <View style={homeStyles.scrollContent}>
+        <View style={homeStyles.topHeaderRow}>
+          <View style={homeStyles.userSection}>
+            <View style={homeStyles.userIconWrap}>
+              <Text style={homeStyles.userIconText}>👤</Text>
             </View>
-          ) : (
-            <Text style={homeStyles.noClothesMessage}>
-              옷장에서 옷을 골라주세요
-            </Text>
-          )}
+            <Text style={homeStyles.greetingText}>user</Text>
+          </View>
+
+          <View style={homeStyles.weatherBox}>
+            <Text style={homeStyles.weatherText}>☀️ 22°C</Text>
+          </View>
+        </View>
+
+        <View style={homeStyles.fittingRoomContainer}>
+          <View style={homeStyles.avatarCard}>
+            <View
+              style={homeStyles.avatarStage}
+              onStartShouldSetResponder={() => true}
+              onResponderGrant={handleResponderGrant}
+              onResponderRelease={handleResponderRelease}
+            >
+              <Image
+                style={homeStyles.avatarImage}
+                source={{
+                  uri: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/w8AAsMB7RWX0U0AAAAASUVORK5CYII=',
+                }}
+              />
+            </View>
+            <Text style={homeStyles.avatarHintText}>{faceLabels[avatarFaceIndex]} - 좌우 드래그</Text>
+          </View>
+        </View>
+
+        <View style={homeStyles.actionRow}>
+          <Pressable style={[homeStyles.actionButton, homeStyles.wardrobeButton]}>
+            <Text style={[homeStyles.actionButtonIcon, homeStyles.wardrobeText]}>🗄️</Text>
+            <Text style={[homeStyles.actionButtonText, homeStyles.wardrobeText]}>옷장</Text>
+          </Pressable>
+          <Pressable style={[homeStyles.actionButton, homeStyles.favoriteButton]}>
+            <Text style={[homeStyles.actionButtonIcon, homeStyles.favoriteText]}>♡</Text>
+            <Text style={[homeStyles.actionButtonText, homeStyles.favoriteText]}>찜</Text>
+          </Pressable>
+        </View>
+
+        <View style={homeStyles.categorySection}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={homeStyles.categoryScroll}
+          >
+            {categories.map((item) => (
+              <View key={item.label} style={homeStyles.categoryCard}>
+                <View style={homeStyles.categoryCircle}>
+                  <Text style={homeStyles.categoryIcon}>{item.icon}</Text>
+                </View>
+                <Text style={homeStyles.categoryLabel}>{item.label}</Text>
+              </View>
+            ))}
+          </ScrollView>
         </View>
       </View>
 
-      {/* 하단 저장된 코디 세트 */}
-      <View style={homeStyles.ootdCard}>
-        <Text style={homeStyles.ootdLabel}>저장된 코디 세트</Text>
-        <View style={homeStyles.ootdItemRow}>
-          <Pressable style={homeStyles.ootdDummy}>
-            <Text style={{ color: '#1E3A8A', fontWeight: '700', fontSize: 12 }}>
-              [1]
-            </Text>
+      <View style={homeStyles.floatingButtonsContainer}>
+        <View style={homeStyles.floatingButtonItem}>
+          <Pressable style={homeStyles.floatingButtonCircle}>
+            <Text style={homeStyles.floatingButtonIcon}>✨</Text>
           </Pressable>
-          <Pressable style={homeStyles.ootdDummy}>
-            <Text style={{ color: '#1E3A8A', fontWeight: '700', fontSize: 12 }}>
-              [2]
-            </Text>
+          <Text style={homeStyles.floatingButtonLabel}>AI 추천</Text>
+        </View>
+
+        <View style={homeStyles.floatingButtonItem}>
+          <Pressable style={homeStyles.floatingButtonCircle}>
+            <Text style={homeStyles.floatingButtonIcon}>💾</Text>
           </Pressable>
-          <Pressable style={homeStyles.ootdDummy}>
-            <Text style={{ color: '#1E3A8A', fontWeight: '700', fontSize: 12 }}>
-              [3]
-            </Text>
-          </Pressable>
+          <Text style={homeStyles.floatingButtonLabel}>코디북</Text>
         </View>
       </View>
     </View>
@@ -719,20 +940,20 @@ function WardrobeScreen({ onSelectClothes }: WardrobeScreenProps) {
   )
 }
 
-// AI Recommend Screen
-function AIRecommendScreen() {
+// Fit Lab Screen
+function FitLabScreen() {
   return (
     <View style={styles.screenContainer}>
-      <Text style={styles.screenTitle}>AI 추천 화면입니다</Text>
+      <Text style={styles.screenTitle}>핏 랩 화면입니다</Text>
     </View>
   )
 }
 
-// Community Screen
-function CommunityScreen() {
+// Social Screen
+function SocialScreen() {
   return (
     <View style={styles.screenContainer}>
-      <Text style={styles.screenTitle}>커뮤니티 화면입니다</Text>
+      <Text style={styles.screenTitle}>소셜 화면입니다</Text>
     </View>
   )
 }
