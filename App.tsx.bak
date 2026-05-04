@@ -1,0 +1,2326 @@
+﻿import { StatusBar } from 'expo-status-bar'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Feather } from '@expo/vector-icons'
+import { useEffect, useRef, useState } from 'react'
+import {
+  Animated,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native'
+
+type TabType = 'home' | 'wardrobe' | 'fitlab' | 'social' | 'settings'
+
+interface SelectedClothes {
+  top?: string
+  bottom?: string
+  outer?: string
+}
+
+interface HomeScreenProps {
+  selectedClothes: SelectedClothes
+  showToast: (message: string) => void
+}
+
+interface WardrobeScreenProps {
+  onSelectClothes: (clothes: Partial<SelectedClothes>) => void
+  showToast: (message: string) => void
+}
+
+type WardrobeFilter = 'all' | 'top' | 'bottom' | 'outer' | 'shoes'
+
+interface WardrobeItem {
+  id: string
+  name: string
+  category: '상의' | '하의' | '아우터' | '신발'
+  type: 'top' | 'bottom' | 'outer'
+  material: string
+  lastWorn: string
+  utilization: string
+  esgAlert?: boolean
+}
+
+export default function App() {
+  const [screen, setScreen] = useState<'login' | 'main'>('login')
+  const [activeTab, setActiveTab] = useState<TabType>('home')
+  const [selectedClothes, setSelectedClothes] = useState<SelectedClothes>({})
+  const [toastMessage, setToastMessage] = useState<string>('')
+  const fadeAnim = useRef(new Animated.Value(1)).current
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const showToast = (message: string) => {
+    setToastMessage(message)
+    if (toastTimer.current) {
+      clearTimeout(toastTimer.current)
+    }
+    toastTimer.current = setTimeout(() => {
+      setToastMessage('')
+    }, 1600)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (toastTimer.current) {
+        clearTimeout(toastTimer.current)
+      }
+    }
+  }, [])
+
+  const handleLogin = () => {
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 220,
+      useNativeDriver: true,
+    }).start(() => {
+      setScreen('main')
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 260,
+        useNativeDriver: true,
+      }).start()
+    })
+  }
+
+  const renderMainContent = () => {
+    switch (activeTab) {
+      case 'home':
+        return <HomeScreen selectedClothes={selectedClothes} showToast={showToast} />
+      case 'wardrobe':
+        return (
+          <WardrobeScreen
+            showToast={showToast}
+            onSelectClothes={(clothes) => {
+              setSelectedClothes((prev) => ({ ...prev, ...clothes }))
+              showToast('아바타에 적용했어요')
+              setActiveTab('home')
+            }}
+          />
+        )
+      case 'fitlab':
+        return <FitLabScreen />
+      case 'social':
+        return <SocialScreen />
+      case 'settings':
+        return <SettingsScreen />
+      default:
+        return <HomeScreen selectedClothes={selectedClothes} showToast={showToast} />
+    }
+  }
+
+  return (
+    <SafeAreaView style={styles.safe}>
+      <StatusBar style="dark" />
+      <View style={styles.page}>
+        <Animated.View style={[styles.phoneFrame, { opacity: fadeAnim }]}>
+          {screen === 'login' ? (
+            <View style={styles.loginScreen}>
+              <View style={styles.logoRow}>
+                <View style={styles.logoIcon}>
+                  <View style={styles.logoDot} />
+                </View>
+                <Text style={styles.logoText}>Style Log</Text>
+              </View>
+
+              <View style={styles.header}>
+                <Text style={styles.title}>로그인</Text>
+                <Text style={styles.subtitle}>나에게 맞는 스타일을 시작해보세요</Text>
+              </View>
+
+              <View style={styles.form}>
+                <TextInput
+                  placeholder="이메일"
+                  placeholderTextColor="#999"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  style={styles.input}
+                />
+                <TextInput
+                  placeholder="비밀번호"
+                  placeholderTextColor="#999"
+                  secureTextEntry
+                  style={styles.input}
+                />
+              </View>
+
+              <View style={styles.linkRow}>
+                <Pressable style={({ pressed }) => [styles.linkButton, pressed && styles.pressed]}>
+                  <Text style={styles.linkText}>비밀번호 찾기</Text>
+                </Pressable>
+                <Pressable style={({ pressed }) => [styles.linkButton, pressed && styles.pressed]}>
+                  <Text style={styles.linkText}>회원가입</Text>
+                </Pressable>
+              </View>
+
+              <View style={styles.bottomAction}>
+                <Pressable
+                  style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}
+                  onPress={handleLogin}
+                >
+                  <LinearGradient colors={['#003d7a', '#001a4d']} style={styles.primaryButtonGradient}>
+                    <Text style={styles.primaryButtonText}>로그인</Text>
+                  </LinearGradient>
+                </Pressable>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.appScreen}>
+              <View style={styles.mainContentWrapper}>{renderMainContent()}</View>
+
+              <View style={styles.bottomNav}>
+                <TabButton
+                  icon="briefcase"
+                  isActive={activeTab === 'fitlab'}
+                  onPress={() => setActiveTab('fitlab')}
+                />
+                <TabButton
+                  icon="calendar"
+                  isActive={activeTab === 'wardrobe'}
+                  onPress={() => setActiveTab('wardrobe')}
+                />
+                <TabButton
+                  icon="home"
+                  isActive={activeTab === 'home'}
+                  onPress={() => setActiveTab('home')}
+                />
+                <TabButton
+                  icon="heart"
+                  isActive={activeTab === 'social'}
+                  onPress={() => setActiveTab('social')}
+                />
+                <TabButton
+                  icon="user"
+                  isActive={activeTab === 'settings'}
+                  onPress={() => setActiveTab('settings')}
+                />
+              </View>
+            </View>
+          )}
+
+          {toastMessage ? (
+            <View style={styles.toast}>
+              <Text style={styles.toastText}>{toastMessage}</Text>
+            </View>
+          ) : null}
+        </Animated.View>
+      </View>
+    </SafeAreaView>
+  )
+}
+
+function TabButton({
+  icon,
+  isActive,
+  onPress,
+}: {
+  icon: keyof typeof Feather.glyphMap
+  isActive: boolean
+  onPress: () => void
+}) {
+  return (
+    <Pressable style={({ pressed }) => [styles.tabItem, pressed && styles.pressed]} onPress={onPress}>
+      <Feather name={icon} size={25} color={isActive ? '#003d7a' : '#B8B8B8'} strokeWidth={2} />
+    </Pressable>
+  )
+}
+
+function getTopTone(name?: string) {
+  if (!name) return '#D7C4AE'
+  if (name.includes('네이비')) return '#1E3A8A'
+  if (name.includes('화이트')) return '#F8FAFF'
+  if (name.includes('검정')) return '#111827'
+  return '#64748B'
+}
+
+function getBottomTone(name?: string) {
+  if (!name) return '#D7C4AE'
+  if (name.includes('청바지')) return '#3B82F6'
+  if (name.includes('슬랙스')) return '#334155'
+  if (name.includes('블랙')) return '#111827'
+  return '#64748B'
+}
+
+function getOuterTone(name?: string) {
+  if (!name) return '#D7C4AE'
+  if (name.includes('레더')) return '#1F2937'
+  if (name.includes('자켓')) return '#374151'
+  if (name.includes('코트')) return '#4B5563'
+  return '#4B5563'
+}
+
+function HomeScreen({ selectedClothes, showToast }: HomeScreenProps) {
+  const [viewMode, setViewMode] = useState<'wardrobe' | 'basket'>('wardrobe')
+  const [chatOpen, setChatOpen] = useState(false)
+
+  const itemPicker = [
+    { label: '네이비 셔츠', icon: '👔' },
+    { label: '청바지 1', icon: '👖' },
+    { label: '청바지 2', icon: '👖' },
+    { label: '레더 자켓', icon: '🧥' },
+    { label: '니트', icon: '🧶' },
+  ]
+
+  const selectedTags = Object.values(selectedClothes).filter(Boolean)
+  const topTone = getTopTone(selectedClothes.top)
+  const bottomTone = getBottomTone(selectedClothes.bottom)
+  const outerTone = getOuterTone(selectedClothes.outer)
+
+  const handleSaveOutfit = () => {
+    showToast('코디북을 열었어요')
+  }
+
+  return (
+    <View style={homeStyles.homeScreen}>
+      <View style={homeStyles.homeTopRow}>
+        <View style={homeStyles.homeUserSection}>
+          <Feather name="user" size={20} color="#333" />
+          <Text style={homeStyles.homeGreetingText}>user</Text>
+        </View>
+
+        <View style={homeStyles.homeWeatherBox}>
+          <Feather name="sun" size={18} color="#333" />
+          <Text style={homeStyles.homeWeatherText}>22°C</Text>
+        </View>
+      </View>
+
+      <View style={homeStyles.homeBody}>
+        <View style={homeStyles.homeActionDock}>
+          <View style={homeStyles.homeSideAction}>
+            <Pressable
+              style={({ pressed }) => [homeStyles.homeFabCircle, pressed && styles.pressed]}
+              onPress={() => setChatOpen((prev) => !prev)}
+            >
+              <Feather name="star" size={24} color="#003d7a" />
+            </Pressable>
+            <Text style={homeStyles.homeSideLabel}>AI 추천</Text>
+          </View>
+
+          <View style={homeStyles.homeSideAction}>
+            <Pressable
+              style={({ pressed }) => [homeStyles.homeFabCircle, pressed && styles.pressed]}
+              onPress={handleSaveOutfit}
+            >
+              <Feather name="book-open" size={23} color="#003d7a" />
+            </Pressable>
+            <Text style={homeStyles.homeSideLabel}>코디북</Text>
+          </View>
+        </View>
+
+        {chatOpen && (
+          <View style={homeStyles.homeChatPopup}>
+            <Text style={homeStyles.homeChatText}>오늘은 네이비 셔츠와 데님 조합이 좋아요.</Text>
+            <Pressable style={({ pressed }) => [homeStyles.homeChatCloseButton, pressed && styles.pressed]} onPress={() => setChatOpen(false)}>
+              <Text style={homeStyles.homeChatClose}>닫기</Text>
+            </Pressable>
+          </View>
+        )}
+
+        <View style={homeStyles.avatarArea}>
+          <View style={homeStyles.avatarFigure}>
+            <View style={homeStyles.avatarHead} />
+            <View style={homeStyles.avatarNeck} />
+            <View
+              style={[
+                homeStyles.avatarOuterLayer,
+                selectedClothes.outer ? homeStyles.avatarOuterLayerActive : homeStyles.avatarOuterLayerBase,
+              ]}
+            />
+            <View
+              style={[
+                homeStyles.avatarTopLayer,
+                selectedClothes.top ? { backgroundColor: topTone } : homeStyles.avatarTopLayerBase,
+              ]}
+            />
+            <View
+              style={[
+                homeStyles.avatarBottomLayer,
+                selectedClothes.bottom ? { backgroundColor: bottomTone } : homeStyles.avatarBottomLayerBase,
+              ]}
+            />
+            <View style={homeStyles.avatarLegs}>
+              <View style={[homeStyles.avatarLeg, selectedClothes.bottom && { backgroundColor: bottomTone }]} />
+              <View style={[homeStyles.avatarLeg, selectedClothes.bottom && { backgroundColor: bottomTone }]} />
+            </View>
+
+            {selectedClothes.outer ? (
+              <View style={[homeStyles.avatarOuterBadge, { backgroundColor: outerTone }]}>
+                <Text style={homeStyles.avatarOuterBadgeText}>{selectedClothes.outer}</Text>
+              </View>
+            ) : null}
+          </View>
+        </View>
+
+        {selectedTags.length > 0 && (
+          <Text style={homeStyles.homeSelectionText}>{selectedTags.join(' / ')}</Text>
+        )}
+
+        <View style={homeStyles.homePillRow}>
+          <Pressable
+            style={({ pressed }) => [
+              homeStyles.homePillButton,
+              viewMode === 'wardrobe' && homeStyles.homePillButtonPrimary,
+              pressed && styles.pressed,
+            ]}
+            onPress={() => setViewMode('wardrobe')}
+          >
+            <Feather
+              name="sidebar"
+              size={20}
+              color={viewMode === 'wardrobe' ? '#FFFFFF' : '#334155'}
+            />
+            <Text style={[homeStyles.homePillText, viewMode === 'wardrobe' && homeStyles.homePillTextActive]}>
+              옷장
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={({ pressed }) => [
+              homeStyles.homePillButton,
+              viewMode === 'basket' && homeStyles.homePillButtonPrimary,
+              pressed && styles.pressed,
+            ]}
+            onPress={() => setViewMode('basket')}
+          >
+            <Feather
+              name="heart"
+              size={21}
+              color={viewMode === 'basket' ? '#FFFFFF' : '#334155'}
+            />
+            <Text style={[homeStyles.homePillText, viewMode === 'basket' && homeStyles.homePillTextActive]}>
+              찜
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+
+      <View style={homeStyles.homeBottomPanel}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {itemPicker.map((item) => (
+            <View key={item.label} style={homeStyles.homePocketItem}>
+              <View style={homeStyles.homePocketCircle}>
+                <Text style={homeStyles.homePocketIcon}>{item.icon}</Text>
+              </View>
+              <Text style={homeStyles.homePocketName}>{item.label}</Text>
+            </View>
+          ))}
+        </ScrollView>
+      </View>
+    </View>
+  )
+}
+
+function WardrobeScreen({
+  onSelectClothes,
+  showToast,
+}: WardrobeScreenProps) {
+  const [activeFilter, setActiveFilter] = useState<WardrobeFilter>('all')
+
+  const items: WardrobeItem[] = [
+    {
+      id: 'navy-shirt',
+      name: '네이비 셔츠',
+      category: '상의',
+      type: 'top',
+      material: '옥스포드 코튼',
+      lastWorn: '2026.04.20',
+      utilization: '활용도 높음',
+    },
+    {
+      id: 'white-tee',
+      name: '화이트 티셔츠',
+      category: '상의',
+      type: 'top',
+      material: '면 100%',
+      lastWorn: '2026.03.28',
+      utilization: '활용도 높음',
+    },
+    {
+      id: 'blue-jeans',
+      name: '청바지',
+      category: '하의',
+      type: 'bottom',
+      material: '데님',
+      lastWorn: '2026.04.03',
+      utilization: '활용도 보통',
+    },
+    {
+      id: 'leather-jacket',
+      name: '레더 자켓',
+      category: '아우터',
+      type: 'outer',
+      material: '합성가죽',
+      lastWorn: '2026.01.18',
+      utilization: '활용도 낮음',
+      esgAlert: true,
+    },
+    {
+      id: 'white-sneakers',
+      name: '화이트 스니커즈',
+      category: '신발',
+      type: 'outer',
+      material: '합성가죽',
+      lastWorn: '2025.12.14',
+      utilization: '활용도 낮음',
+      esgAlert: true,
+    },
+  ]
+
+  const filterTabs: Array<{ label: string; value: WardrobeFilter }> = [
+    { label: '전체', value: 'all' },
+    { label: '상의', value: 'top' },
+    { label: '하의', value: 'bottom' },
+    { label: '아우터', value: 'outer' },
+    { label: '신발', value: 'shoes' },
+  ]
+
+  const filteredItems = items.filter((item) => {
+    if (activeFilter === 'all') return true
+    if (activeFilter === 'shoes') return item.category === '신발'
+    return item.type === activeFilter
+  })
+
+  const handleSelectClothing = (item: WardrobeItem) => {
+    const clothesData: Partial<SelectedClothes> = {}
+    clothesData[item.type] = item.name
+    onSelectClothes(clothesData)
+    showToast('아바타에 적용했어요')
+  }
+
+  return (
+    <View style={styles.wardrobeScreen}>
+      <View style={styles.wardrobeHeader}>
+        <View style={styles.wardrobeHeaderTop}>
+          <View>
+            <Text style={styles.screenTitle}>내 옷장</Text>
+            <Text style={styles.screenSubtitle}>카테고리별로 가볍게 확인하고 바로 입어볼 수 있어요</Text>
+          </View>
+        </View>
+
+        <View style={styles.wardrobeHeaderActionRow}>
+          <Pressable
+            style={({ pressed }) => [styles.minimalButton, pressed && styles.pressed]}
+            onPress={() => showToast('사진 업로드 기능은 준비 중입니다')}
+          >
+            <Text style={styles.minimalButtonText}>+ 옷 사진 추가</Text>
+          </Pressable>
+        </View>
+
+        <View style={styles.filterRow}>
+          {filterTabs.map((tab) => {
+            const isActive = activeFilter === tab.value
+            return (
+              <Pressable
+                key={tab.value}
+                style={({ pressed }) => [
+                  styles.filterTab,
+                  isActive && styles.filterTabActive,
+                  pressed && styles.pressed,
+                ]}
+                onPress={() => setActiveFilter(tab.value)}
+              >
+                <Text style={[styles.filterTabText, isActive && styles.filterTabTextActive]}>
+                  {tab.label}
+                </Text>
+              </Pressable>
+            )
+          })}
+        </View>
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.wardrobeList}>
+        {filteredItems.map((item) => (
+          <Pressable
+            key={item.id}
+            style={({ pressed }) => [styles.wardrobeRow, pressed && styles.pressed]}
+            onPress={() => handleSelectClothing(item)}
+          >
+            <View style={styles.wardrobeInfo}>
+              <View style={styles.wardrobeNameRow}>
+                <Text style={styles.wardrobeName}>{item.name}</Text>
+                {item.esgAlert ? <Text style={styles.wardrobeBadge}>오랫동안 안 입었어요</Text> : null}
+              </View>
+
+              <Text style={styles.wardrobeMeta}>{item.category}</Text>
+              <Text style={styles.wardrobeMeta}>소재 · {item.material}</Text>
+              <Text style={styles.wardrobeMeta}>마지막 착용일 · {item.lastWorn}</Text>
+              <Text style={styles.wardrobeMeta}>활용도 · {item.utilization}</Text>
+            </View>
+
+            <Text style={styles.wardrobeActionText}>입어보기</Text>
+          </Pressable>
+        ))}
+      </ScrollView>
+    </View>
+  )
+}
+
+function FitLabScreen() {
+  return (
+    <View style={styles.screenPlaceholder}>
+      <Text style={styles.screenTitle}>핏 랩</Text>
+      <Text style={styles.screenSubtitle}>체형과 퍼스널 컬러를 간결하게 정리한 화면입니다.</Text>
+
+      <View style={styles.sectionBlock}>
+        <Text style={styles.sectionTitle}>체형 분석 요약</Text>
+        <Text style={styles.sectionText}>A-line · 어깨선이 자연스럽게 보이는 실루엣이 잘 어울려요.</Text>
+      </View>
+
+      <View style={styles.sectionBlock}>
+        <Text style={styles.sectionTitle}>퍼스널 컬러 요약</Text>
+        <Text style={styles.sectionText}>Cool Summer · 네이비, 화이트, 차분한 그레이 계열이 잘 맞아요.</Text>
+      </View>
+
+      <View style={styles.sectionBlock}>
+        <Text style={styles.sectionTitle}>코디 실패 방지 피드백</Text>
+        <View style={styles.lineList}>
+          <View style={styles.lineItem}>
+            <Text style={styles.lineItemText}>너무 큰 오버핏 상의는 비율을 흐릴 수 있어요.</Text>
+          </View>
+          <View style={styles.lineItem}>
+            <Text style={styles.lineItemText}>밝은 상의에는 톤 다운된 하의를 매치해보세요.</Text>
+          </View>
+          <View style={styles.lineItem}>
+            <Text style={styles.lineItemText}>아우터는 어깨선이 자연스러운 디자인이 좋아요.</Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.sectionBlock}>
+        <Text style={styles.sectionTitle}>스타일 성장률</Text>
+        <Text style={styles.sectionText}>이번 달 코디 완성도 +8% · 지난달보다 더 안정적인 조합을 선택하고 있어요.</Text>
+      </View>
+    </View>
+  )
+}
+
+function SocialScreen() {
+  return (
+    <View style={styles.screenPlaceholder}>
+      <Text style={styles.screenTitle}>소셜</Text>
+      <Text style={styles.screenSubtitle}>전체 피드와 친구 피드를 한 번에 확인할 수 있어요.</Text>
+
+      <View style={styles.toggleRow}>
+        <Pressable style={[styles.toggleChip, styles.toggleChipActive]}>
+          <Text style={[styles.toggleChipText, styles.toggleChipTextActive]}>전체 피드</Text>
+        </Pressable>
+        <Pressable style={styles.toggleChip}>
+          <Text style={styles.toggleChipText}>내 친구</Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.sectionBlock}>
+        <Text style={styles.sectionTitle}>미니멀 코디 피드</Text>
+        <View style={styles.lineList}>
+          <View style={styles.feedItem}>
+            <Text style={styles.feedTitle}>네이비 셋업</Text>
+            <Text style={styles.feedText}>깔끔한 출근룩 · 저장 142</Text>
+          </View>
+          <View style={styles.feedItem}>
+            <Text style={styles.feedTitle}>데일리 스트릿</Text>
+            <Text style={styles.feedText}>여유 있는 실루엣 · 저장 98</Text>
+          </View>
+          <View style={styles.feedItem}>
+            <Text style={styles.feedTitle}>무채색 레이어드</Text>
+            <Text style={styles.feedText}>톤온톤 조합 · 저장 76</Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.sectionBlock}>
+        <Pressable style={({ pressed }) => [styles.minimalButton, pressed && styles.pressed]}>
+          <Text style={styles.minimalButtonText}>친구에게 코디 추천하기</Text>
+        </Pressable>
+      </View>
+    </View>
+  )
+}
+
+function SettingsScreen() {
+  return (
+    <View style={styles.screenPlaceholder}>
+      <Text style={styles.screenTitle}>설정</Text>
+      <Text style={styles.screenSubtitle}>프로필과 스타일 데이터를 조용하고 깔끔하게 관리합니다.</Text>
+
+      <View style={styles.sectionBlock}>
+        <Text style={styles.sectionTitle}>프로필 정보</Text>
+        <View style={styles.lineList}>
+          <View style={styles.lineItem}>
+            <Text style={styles.lineItemLabel}>이름</Text>
+            <Text style={styles.lineItemValue}>user</Text>
+          </View>
+          <View style={styles.lineItem}>
+            <Text style={styles.lineItemLabel}>지역</Text>
+            <Text style={styles.lineItemValue}>서울</Text>
+          </View>
+          <View style={styles.lineItem}>
+            <Text style={styles.lineItemLabel}>성별 / 연령대</Text>
+            <Text style={styles.lineItemValue}>남성 · 20대 후반</Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.sectionBlock}>
+        <Text style={styles.sectionTitle}>체형 / 컬러 수정</Text>
+        <View style={styles.lineList}>
+          <View style={styles.lineItem}>
+            <Text style={styles.lineItemLabel}>체형 데이터 수정</Text>
+            <Text style={styles.lineItemValue}>버튼</Text>
+          </View>
+          <View style={styles.lineItem}>
+            <Text style={styles.lineItemLabel}>퍼스널 컬러 수정</Text>
+            <Text style={styles.lineItemValue}>버튼</Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.sectionBlock}>
+        <Text style={styles.sectionTitle}>개인정보 / 보안 설정</Text>
+        <View style={styles.lineList}>
+          <View style={styles.lineItem}>
+            <Text style={styles.lineItemLabel}>연결된 이메일</Text>
+            <Text style={styles.lineItemValue}>user@example.com</Text>
+          </View>
+          <View style={styles.lineItem}>
+            <Text style={styles.lineItemLabel}>알림 설정</Text>
+            <Text style={styles.lineItemValue}>활성화</Text>
+          </View>
+          <View style={styles.lineItem}>
+            <Text style={styles.lineItemLabel}>비밀번호</Text>
+            <Text style={styles.lineItemValue}>최근 변경 32일 전</Text>
+          </View>
+        </View>
+      </View>
+    </View>
+  )
+}
+
+const styles = StyleSheet.create({
+  safe: {
+    flex: 1,
+    backgroundColor: '#F3F3F3',
+  },
+  page: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F3F3F3',
+    padding: 20,
+  },
+  phoneFrame: {
+    width: 390,
+    height: 844,
+    maxWidth: '100%',
+    maxHeight: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 34,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+  },
+  appScreen: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  loginScreen: {
+    flex: 1,
+    padding: 30,
+    justifyContent: 'center',
+  },
+  logoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 20,
+  },
+  logoIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#111',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoDot: {
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: '#fff',
+  },
+  logoText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111',
+  },
+  header: {
+    marginBottom: 30,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#111',
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#777',
+    marginTop: 5,
+  },
+  form: {
+    gap: 14,
+  },
+  input: {
+    height: 54,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 18,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+  },
+  linkRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 14,
+  },
+  linkButton: {
+    borderRadius: 8,
+  },
+  linkText: {
+    color: '#333',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  bottomAction: {
+    marginTop: 38,
+  },
+  primaryButton: {
+    height: 54,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  primaryButtonGradient: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  primaryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  mainContentWrapper: {
+    flex: 1,
+  },
+  bottomNav: {
+    flexDirection: 'row',
+    height: 78,
+    borderTopWidth: 1,
+    borderTopColor: '#EDEDED',
+    backgroundColor: '#FFFFFF',
+    paddingBottom: 18,
+    paddingTop: 10,
+  },
+  tabItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  screenPlaceholder: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 62,
+    backgroundColor: '#FFFFFF',
+  },
+  screenTitle: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#111',
+    marginBottom: 12,
+  },
+  screenSubtitle: {
+    color: '#777',
+    fontSize: 13,
+    lineHeight: 19,
+    marginBottom: 18,
+  },
+  sectionBlock: {
+    marginTop: 20,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#edf1f7',
+  },
+  sectionTitle: {
+    color: '#1E3A8A',
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 10,
+  },
+  sectionText: {
+    color: '#667085',
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  lineList: {
+    gap: 0,
+  },
+  lineItem: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#edf1f7',
+  },
+  lineItemText: {
+    color: '#111827',
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  lineItemLabel: {
+    color: '#667085',
+    fontSize: 12,
+    marginBottom: 4,
+    fontWeight: '600',
+  },
+  lineItemValue: {
+    color: '#111827',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 4,
+  },
+  toggleChip: {
+    paddingHorizontal: 14,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#f4f7ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  toggleChipActive: {
+    backgroundColor: '#1E3A8A',
+  },
+  toggleChipText: {
+    color: '#5f6f91',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  toggleChipTextActive: {
+    color: '#ffffff',
+  },
+  feedItem: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#edf1f7',
+  },
+  feedTitle: {
+    color: '#111827',
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  feedText: {
+    color: '#667085',
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  minimalButton: {
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: '#DDDDDD',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    backgroundColor: '#FFFFFF',
+  },
+  minimalButtonText: {
+    color: '#333',
+    fontWeight: '600',
+  },
+
+  wardrobeScreen: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    backgroundColor: '#FFFFFF',
+  },
+  wardrobeHeader: {
+    gap: 10,
+    marginBottom: 12,
+  },
+  wardrobeHeaderTop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  wardrobeHeaderActionRow: {
+    alignSelf: 'flex-start',
+  },
+  filterRow: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+    marginTop: 4,
+  },
+  filterTab: {
+    paddingHorizontal: 14,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#f4f7ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterTabActive: {
+    backgroundColor: '#1E3A8A',
+  },
+  filterTabText: {
+    color: '#5f6f91',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  filterTabTextActive: {
+    color: '#ffffff',
+  },
+  wardrobeList: {
+    paddingBottom: 100,
+  },
+  wardrobeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#edf1f7',
+    gap: 16,
+  },
+  wardrobeInfo: {
+    flex: 1,
+    gap: 4,
+  },
+  wardrobeNameRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 8,
+  },
+  wardrobeName: {
+    color: '#111827',
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  wardrobeBadge: {
+    color: '#1E3A8A',
+    fontSize: 10,
+    fontWeight: '700',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: '#eef2ff',
+  },
+  wardrobeMeta: {
+    color: '#667085',
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  wardrobeActionText: {
+    color: '#1E3A8A',
+    fontWeight: '700',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  uploadToast: {
+    position: 'absolute',
+    left: 18,
+    right: 18,
+    bottom: 88,
+    alignItems: 'center',
+    zIndex: 60,
+  },
+  uploadToastCard: {
+    backgroundColor: '#1E3A8A',
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  uploadToastText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+
+  appScreen: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+
+  sectionTitle: {
+    color: '#1E3A8A',
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 10,
+  },
+  sectionText: {
+    color: '#667085',
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  simpleCard: {
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 12,
+    backgroundColor: '#FFFFFF',
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111',
+    marginBottom: 8,
+  },
+  cardText: {
+    color: '#777',
+    lineHeight: 20,
+  },
+})
+
+const homeStyles = StyleSheet.create({
+  homeScreen: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 24,
+    paddingTop: 16,
+  },
+  homeTopRow: {
+    height: 74,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  homeUserSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  homeGreetingText: {
+    fontSize: 19,
+    fontWeight: '700',
+    color: '#111',
+  },
+  homeWeatherBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+  },
+  homeWeatherText: {
+    fontSize: 19,
+    fontWeight: '700',
+    color: '#111',
+  },
+  homeBody: {
+    flex: 1,
+    position: 'relative',
+    alignItems: 'center',
+  },
+  homeActionDock: {
+    position: 'absolute',
+    left: 0,
+    top: 28,
+    zIndex: 10,
+    gap: 18,
+  },
+  homeSideAction: {
+    alignItems: 'center',
+  },
+  homeFabCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#003d7a',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  homeSideLabel: {
+    marginTop: 8,
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#111',
+  },
+  homeChatPopup: {
+    position: 'absolute',
+    left: 70,
+    top: 38,
+    width: 220,
+    backgroundColor: '#111',
+    padding: 14,
+    borderRadius: 14,
+    zIndex: 20,
+  },
+  homeChatText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  homeChatCloseButton: {
+    alignSelf: 'flex-start',
+  },
+  homeChatClose: {
+    color: '#FFFFFF',
+    marginTop: 8,
+    fontWeight: '700',
+  },
+  avatarArea: {
+    flex: 1,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 10,
+  },
+  avatarFigure: {
+    alignItems: 'center',
+    transform: [{ scale: 1.05 }],
+    position: 'relative',
+  },
+  avatarHead: {
+    width: 62,
+    height: 72,
+    borderRadius: 32,
+    backgroundColor: '#D7C4AE',
+    zIndex: 4,
+  },
+  avatarNeck: {
+    width: 24,
+    height: 18,
+    backgroundColor: '#D7C4AE',
+    marginTop: -2,
+    zIndex: 3,
+  },
+  avatarOuterLayer: {
+    position: 'absolute',
+    top: 70,
+    left: '50%',
+    marginLeft: -76,
+    width: 152,
+    height: 248,
+    borderRadius: 54,
+    zIndex: 1,
+    opacity: 0.9,
+  },
+  avatarOuterLayerBase: {
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+  },
+  avatarOuterLayerActive: {
+    backgroundColor: '#2F3640',
+  },
+  avatarTopLayer: {
+    position: 'absolute',
+    top: 92,
+    left: '50%',
+    marginLeft: -60,
+    width: 120,
+    height: 176,
+    borderRadius: 48,
+    zIndex: 2,
+    opacity: 0.95,
+  },
+  avatarTopLayerBase: {
+    backgroundColor: '#D7C4AE',
+  },
+  avatarBottomLayer: {
+    position: 'absolute',
+    top: 250,
+    left: '50%',
+    marginLeft: -55,
+    width: 110,
+    height: 160,
+    borderRadius: 26,
+    zIndex: 2,
+    opacity: 0.95,
+  },
+  avatarBottomLayerBase: {
+    backgroundColor: '#D7C4AE',
+  },
+  avatarLegs: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 208,
+    zIndex: 3,
+  },
+  avatarLeg: {
+    width: 44,
+    height: 170,
+    borderRadius: 24,
+    backgroundColor: '#D7C4AE',
+  },
+  avatarOuterBadge: {
+    position: 'absolute',
+    bottom: 8,
+    alignSelf: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    zIndex: 5,
+  },
+  avatarOuterBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  homeSelectionText: {
+    color: '#333',
+    fontWeight: '600',
+    fontSize: 12,
+    marginBottom: 8,
+  },
+  homePillRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
+    marginBottom: 20,
+  },
+  homePillButton: {
+    minWidth: 108,
+    height: 42,
+    borderRadius: 21,
+    paddingHorizontal: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#D9DEE7',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  homePillButtonPrimary: {
+    backgroundColor: '#003d7a',
+    borderColor: '#003d7a',
+  },
+  homePillText: {
+    color: '#334155',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  homePillTextActive: {
+    color: '#FFFFFF',
+  },
+  homeBottomPanel: {
+    height: 132,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 0,
+    paddingTop: 8,
+  },
+  homePocketItem: {
+    width: 98,
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  homePocketCircle: {
+    width: 74,
+    height: 74,
+    borderRadius: 37,
+    backgroundColor: '#F6F6F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  homePocketIcon: {
+    fontSize: 30,
+  },
+  homePocketName: {
+    color: '#111',
+    fontSize: 14,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  homeToast: {
+    position: 'absolute',
+    bottom: 142,
+    alignSelf: 'center',
+    backgroundColor: '#111',
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 999,
+  },
+  homeToastText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 12,
+  },
+})
+
+function WardrobeScreen({
+  onSelectClothes,
+  showToast,
+}: WardrobeScreenProps) {
+  const [activeFilter, setActiveFilter] = useState<WardrobeFilter>('all')
+
+  const items: WardrobeItem[] = [
+    {
+      id: 'navy-shirt',
+      name: '네이비 셔츠',
+      category: '상의',
+      type: 'top',
+      material: '옥스포드 코튼',
+      lastWorn: '2026.04.20',
+      utilization: '활용도 높음',
+    },
+    {
+      id: 'white-tee',
+      name: '화이트 티셔츠',
+      category: '상의',
+      type: 'top',
+      material: '면 100%',
+      lastWorn: '2026.03.28',
+      utilization: '활용도 높음',
+    },
+    {
+      id: 'blue-jeans',
+      name: '청바지',
+      category: '하의',
+      type: 'bottom',
+      material: '데님',
+      lastWorn: '2026.04.03',
+      utilization: '활용도 보통',
+    },
+    {
+      id: 'leather-jacket',
+      name: '레더 자켓',
+      category: '아우터',
+      type: 'outer',
+      material: '합성가죽',
+      lastWorn: '2026.01.18',
+      utilization: '활용도 낮음',
+      esgAlert: true,
+    },
+    {
+      id: 'white-sneakers',
+      name: '화이트 스니커즈',
+      category: '신발',
+      type: 'outer',
+      material: '합성가죽',
+      lastWorn: '2025.12.14',
+      utilization: '활용도 낮음',
+      esgAlert: true,
+    },
+  ]
+
+  const filterTabs: Array<{ label: string; value: WardrobeFilter }> = [
+    { label: '전체', value: 'all' },
+    { label: '상의', value: 'top' },
+    { label: '하의', value: 'bottom' },
+    { label: '아우터', value: 'outer' },
+    { label: '신발', value: 'shoes' },
+  ]
+
+  const filteredItems = items.filter((item) => {
+    if (activeFilter === 'all') return true
+    if (activeFilter === 'shoes') return item.category === '신발'
+    return item.type === activeFilter
+  })
+
+  const handleSelectClothing = (item: WardrobeItem) => {
+    const clothesData: Partial<SelectedClothes> = {}
+    clothesData[item.type] = item.name
+    onSelectClothes(clothesData)
+    showToast('아바타에 적용했어요')
+  }
+
+  return (
+    <View style={styles.wardrobeScreen}>
+      <View style={styles.wardrobeHeader}>
+        <View style={styles.wardrobeHeaderTop}>
+          <View>
+            <Text style={styles.screenTitle}>내 옷장</Text>
+            <Text style={styles.screenSubtitle}>카테고리별로 가볍게 확인하고 바로 입어볼 수 있어요</Text>
+          </View>
+        </View>
+
+        <View style={styles.wardrobeHeaderActionRow}>
+          <Pressable
+            style={({ pressed }) => [styles.minimalButton, pressed && styles.pressed]}
+            onPress={() => showToast('사진 업로드 기능은 준비 중입니다')}
+          >
+            <Text style={styles.minimalButtonText}>+ 옷 사진 추가</Text>
+          </Pressable>
+        </View>
+
+        <View style={styles.filterRow}>
+          {filterTabs.map((tab) => {
+            const isActive = activeFilter === tab.value
+            return (
+              <Pressable
+                key={tab.value}
+                style={({ pressed }) => [
+                  styles.filterTab,
+                  isActive && styles.filterTabActive,
+                  pressed && styles.pressed,
+                ]}
+                onPress={() => setActiveFilter(tab.value)}
+              >
+                <Text style={[styles.filterTabText, isActive && styles.filterTabTextActive]}>
+                  {tab.label}
+                </Text>
+              </Pressable>
+            )
+          })}
+        </View>
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.wardrobeList}>
+        {filteredItems.map((item) => (
+          <Pressable
+            key={item.id}
+            style={({ pressed }) => [styles.wardrobeRow, pressed && styles.pressed]}
+            onPress={() => handleSelectClothing(item)}
+          >
+            <View style={styles.wardrobeInfo}>
+              <View style={styles.wardrobeNameRow}>
+                <Text style={styles.wardrobeName}>{item.name}</Text>
+                {item.esgAlert ? <Text style={styles.wardrobeBadge}>오랫동안 안 입었어요</Text> : null}
+              </View>
+
+              <Text style={styles.wardrobeMeta}>{item.category}</Text>
+              <Text style={styles.wardrobeMeta}>소재 · {item.material}</Text>
+              <Text style={styles.wardrobeMeta}>마지막 착용일 · {item.lastWorn}</Text>
+              <Text style={styles.wardrobeMeta}>활용도 · {item.utilization}</Text>
+            </View>
+
+            <Text style={styles.wardrobeActionText}>입어보기</Text>
+          </Pressable>
+        ))}
+      </ScrollView>
+    </View>
+  )
+}
+
+function FitLabScreen() {
+  return (
+    <View style={styles.screenPlaceholder}>
+      <Text style={styles.screenTitle}>핏 랩</Text>
+      <Text style={styles.screenSubtitle}>체형과 퍼스널 컬러를 간결하게 정리한 화면입니다.</Text>
+
+      <View style={styles.sectionBlock}>
+        <Text style={styles.sectionTitle}>체형 분석 요약</Text>
+        <Text style={styles.sectionText}>A-line · 어깨선이 자연스럽게 보이는 실루엣이 잘 어울려요.</Text>
+      </View>
+
+      <View style={styles.sectionBlock}>
+        <Text style={styles.sectionTitle}>퍼스널 컬러 요약</Text>
+        <Text style={styles.sectionText}>Cool Summer · 네이비, 화이트, 차분한 그레이 계열이 잘 맞아요.</Text>
+      </View>
+
+      <View style={styles.sectionBlock}>
+        <Text style={styles.sectionTitle}>코디 실패 방지 피드백</Text>
+        <View style={styles.lineList}>
+          <View style={styles.lineItem}>
+            <Text style={styles.lineItemText}>너무 큰 오버핏 상의는 비율을 흐릴 수 있어요.</Text>
+          </View>
+          <View style={styles.lineItem}>
+            <Text style={styles.lineItemText}>밝은 상의에는 톤 다운된 하의를 매치해보세요.</Text>
+          </View>
+          <View style={styles.lineItem}>
+            <Text style={styles.lineItemText}>아우터는 어깨선이 자연스러운 디자인이 좋아요.</Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.sectionBlock}>
+        <Text style={styles.sectionTitle}>스타일 성장률</Text>
+        <Text style={styles.sectionText}>이번 달 코디 완성도 +8% · 지난달보다 더 안정적인 조합을 선택하고 있어요.</Text>
+      </View>
+    </View>
+  )
+}
+
+function SocialScreen() {
+  return (
+    <View style={styles.screenPlaceholder}>
+      <Text style={styles.screenTitle}>소셜</Text>
+      <Text style={styles.screenSubtitle}>전체 피드와 친구 피드를 한 번에 확인할 수 있어요.</Text>
+
+      <View style={styles.toggleRow}>
+        <Pressable style={[styles.toggleChip, styles.toggleChipActive]}>
+          <Text style={[styles.toggleChipText, styles.toggleChipTextActive]}>전체 피드</Text>
+        </Pressable>
+        <Pressable style={styles.toggleChip}>
+          <Text style={styles.toggleChipText}>내 친구</Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.sectionBlock}>
+        <Text style={styles.sectionTitle}>미니멀 코디 피드</Text>
+        <View style={styles.lineList}>
+          <View style={styles.feedItem}>
+            <Text style={styles.feedTitle}>네이비 셋업</Text>
+            <Text style={styles.feedText}>깔끔한 출근룩 · 저장 142</Text>
+          </View>
+          <View style={styles.feedItem}>
+            <Text style={styles.feedTitle}>데일리 스트릿</Text>
+            <Text style={styles.feedText}>여유 있는 실루엣 · 저장 98</Text>
+          </View>
+          <View style={styles.feedItem}>
+            <Text style={styles.feedTitle}>무채색 레이어드</Text>
+            <Text style={styles.feedText}>톤온톤 조합 · 저장 76</Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.sectionBlock}>
+        <Pressable style={({ pressed }) => [styles.minimalButton, pressed && styles.pressed]}>
+          <Text style={styles.minimalButtonText}>친구에게 코디 추천하기</Text>
+        </Pressable>
+      </View>
+    </View>
+  )
+}
+
+function SettingsScreen() {
+  return (
+    <View style={styles.screenPlaceholder}>
+      <Text style={styles.screenTitle}>설정</Text>
+      <Text style={styles.screenSubtitle}>프로필과 스타일 데이터를 조용하고 깔끔하게 관리합니다.</Text>
+
+      <View style={styles.sectionBlock}>
+        <Text style={styles.sectionTitle}>프로필 정보</Text>
+        <View style={styles.lineList}>
+          <View style={styles.lineItem}>
+            <Text style={styles.lineItemLabel}>이름</Text>
+            <Text style={styles.lineItemValue}>user</Text>
+          </View>
+          <View style={styles.lineItem}>
+            <Text style={styles.lineItemLabel}>지역</Text>
+            <Text style={styles.lineItemValue}>서울</Text>
+          </View>
+          <View style={styles.lineItem}>
+            <Text style={styles.lineItemLabel}>성별 / 연령대</Text>
+            <Text style={styles.lineItemValue}>남성 · 20대 후반</Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.sectionBlock}>
+        <Text style={styles.sectionTitle}>체형 / 컬러 수정</Text>
+        <View style={styles.lineList}>
+          <View style={styles.lineItem}>
+            <Text style={styles.lineItemLabel}>체형 데이터 수정</Text>
+            <Text style={styles.lineItemValue}>버튼</Text>
+          </View>
+          <View style={styles.lineItem}>
+            <Text style={styles.lineItemLabel}>퍼스널 컬러 수정</Text>
+            <Text style={styles.lineItemValue}>버튼</Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.sectionBlock}>
+        <Text style={styles.sectionTitle}>개인정보 / 보안 설정</Text>
+        <View style={styles.lineList}>
+          <View style={styles.lineItem}>
+            <Text style={styles.lineItemLabel}>연결된 이메일</Text>
+            <Text style={styles.lineItemValue}>user@example.com</Text>
+          </View>
+          <View style={styles.lineItem}>
+            <Text style={styles.lineItemLabel}>알림 설정</Text>
+            <Text style={styles.lineItemValue}>활성화</Text>
+          </View>
+          <View style={styles.lineItem}>
+            <Text style={styles.lineItemLabel}>비밀번호</Text>
+            <Text style={styles.lineItemValue}>최근 변경 32일 전</Text>
+          </View>
+        </View>
+      </View>
+    </View>
+  )
+}
+
+const styles = StyleSheet.create({
+  safe: {
+    flex: 1,
+    backgroundColor: '#F3F3F3',
+  },
+  page: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F3F3F3',
+    padding: 20,
+  },
+  phoneFrame: {
+    width: 390,
+    height: 844,
+    maxWidth: '100%',
+    maxHeight: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 34,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+  },
+  appScreen: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  loginScreen: {
+    flex: 1,
+    padding: 30,
+    justifyContent: 'center',
+  },
+  logoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 20,
+  },
+  logoIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#111',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoDot: {
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: '#fff',
+  },
+  logoText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111',
+  },
+  header: {
+    marginBottom: 30,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#111',
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#777',
+    marginTop: 5,
+  },
+  form: {
+    gap: 14,
+  },
+  input: {
+    height: 54,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 18,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+  },
+  linkRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 14,
+  },
+  linkButton: {
+    borderRadius: 8,
+  },
+  linkText: {
+    color: '#333',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  bottomAction: {
+    marginTop: 38,
+  },
+  primaryButton: {
+    height: 54,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  primaryButtonGradient: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  primaryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  mainContentWrapper: {
+    flex: 1,
+  },
+  bottomNav: {
+    flexDirection: 'row',
+    height: 78,
+    borderTopWidth: 1,
+    borderTopColor: '#EDEDED',
+    backgroundColor: '#FFFFFF',
+    paddingBottom: 18,
+    paddingTop: 10,
+  },
+  tabItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  screenPlaceholder: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 62,
+    backgroundColor: '#FFFFFF',
+  },
+  screenTitle: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#111',
+    marginBottom: 12,
+  },
+  screenSubtitle: {
+    color: '#777',
+    fontSize: 13,
+    lineHeight: 19,
+    marginBottom: 18,
+  },
+  sectionBlock: {
+    marginTop: 20,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#edf1f7',
+  },
+  sectionTitle: {
+    color: '#1E3A8A',
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 10,
+  },
+  sectionText: {
+    color: '#667085',
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  lineList: {
+    gap: 0,
+  },
+  lineItem: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#edf1f7',
+  },
+  lineItemText: {
+    color: '#111827',
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  lineItemLabel: {
+    color: '#667085',
+    fontSize: 12,
+    marginBottom: 4,
+    fontWeight: '600',
+  },
+  lineItemValue: {
+    color: '#111827',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 4,
+  },
+  toggleChip: {
+    paddingHorizontal: 14,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#f4f7ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  toggleChipActive: {
+    backgroundColor: '#1E3A8A',
+  },
+  toggleChipText: {
+    color: '#5f6f91',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  toggleChipTextActive: {
+    color: '#ffffff',
+  },
+  feedItem: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#edf1f7',
+  },
+  feedTitle: {
+    color: '#111827',
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  feedText: {
+    color: '#667085',
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  minimalButton: {
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: '#DDDDDD',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    backgroundColor: '#FFFFFF',
+  },
+  minimalButtonText: {
+    color: '#333',
+    fontWeight: '600',
+  },
+
+  wardrobeScreen: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    backgroundColor: '#FFFFFF',
+  },
+  wardrobeHeader: {
+    gap: 10,
+    marginBottom: 12,
+  },
+  wardrobeHeaderTop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  wardrobeHeaderActionRow: {
+    alignSelf: 'flex-start',
+  },
+  filterRow: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+    marginTop: 4,
+  },
+  filterTab: {
+    paddingHorizontal: 14,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#f4f7ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterTabActive: {
+    backgroundColor: '#1E3A8A',
+  },
+  filterTabText: {
+    color: '#5f6f91',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  filterTabTextActive: {
+    color: '#ffffff',
+  },
+  wardrobeList: {
+    paddingBottom: 100,
+  },
+  wardrobeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#edf1f7',
+    gap: 16,
+  },
+  wardrobeInfo: {
+    flex: 1,
+    gap: 4,
+  },
+  wardrobeNameRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 8,
+  },
+  wardrobeName: {
+    color: '#111827',
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  wardrobeBadge: {
+    color: '#1E3A8A',
+    fontSize: 10,
+    fontWeight: '700',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: '#eef2ff',
+  },
+  wardrobeMeta: {
+    color: '#667085',
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  wardrobeActionText: {
+    color: '#1E3A8A',
+    fontWeight: '700',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  uploadToast: {
+    position: 'absolute',
+    left: 18,
+    right: 18,
+    bottom: 88,
+    alignItems: 'center',
+    zIndex: 60,
+  },
+  uploadToastCard: {
+    backgroundColor: '#1E3A8A',
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  uploadToastText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+
+  appScreen: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+
+  sectionTitle: {
+    color: '#1E3A8A',
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 10,
+  },
+  sectionText: {
+    color: '#667085',
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  simpleCard: {
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 12,
+    backgroundColor: '#FFFFFF',
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111',
+    marginBottom: 8,
+  },
+  cardText: {
+    color: '#777',
+    lineHeight: 20,
+  },
+})
+
+const homeStyles = StyleSheet.create({
+  homeScreen: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 24,
+    paddingTop: 16,
+  },
+  homeTopRow: {
+    height: 74,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  homeUserSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  homeGreetingText: {
+    fontSize: 19,
+    fontWeight: '700',
+    color: '#111',
+  },
+  homeWeatherBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+  },
+  homeWeatherText: {
+    fontSize: 19,
+    fontWeight: '700',
+    color: '#111',
+  },
+  homeBody: {
+    flex: 1,
+    position: 'relative',
+    alignItems: 'center',
+  },
+  homeActionDock: {
+    position: 'absolute',
+    left: 0,
+    top: 28,
+    zIndex: 10,
+    gap: 18,
+  },
+  homeSideAction: {
+    alignItems: 'center',
+  },
+  homeFabCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#003d7a',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  homeSideLabel: {
+    marginTop: 8,
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#111',
+  },
+  homeChatPopup: {
+    position: 'absolute',
+    left: 70,
+    top: 38,
+    width: 220,
+    backgroundColor: '#111',
+    padding: 14,
+    borderRadius: 14,
+    zIndex: 20,
+  },
+  homeChatText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  homeChatCloseButton: {
+    alignSelf: 'flex-start',
+  },
+  homeChatClose: {
+    color: '#FFFFFF',
+    marginTop: 8,
+    fontWeight: '700',
+  },
+  avatarArea: {
+    flex: 1,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 10,
+  },
+  avatarFigure: {
+    alignItems: 'center',
+    transform: [{ scale: 1.05 }],
+    position: 'relative',
+  },
+  avatarHead: {
+    width: 62,
+    height: 72,
+    borderRadius: 32,
+    backgroundColor: '#D7C4AE',
+    zIndex: 4,
+  },
+  avatarNeck: {
+    width: 24,
+    height: 18,
+    backgroundColor: '#D7C4AE',
+    marginTop: -2,
+    zIndex: 3,
+  },
+  avatarOuterLayer: {
+    position: 'absolute',
+    top: 70,
+    left: '50%',
+    marginLeft: -76,
+    width: 152,
+    height: 248,
+    borderRadius: 54,
+    zIndex: 1,
+    opacity: 0.9,
+  },
+  avatarOuterLayerBase: {
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+  },
+  avatarOuterLayerActive: {
+    backgroundColor: '#2F3640',
+  },
+  avatarTopLayer: {
+    position: 'absolute',
+    top: 92,
+    left: '50%',
+    marginLeft: -60,
+    width: 120,
+    height: 176,
+    borderRadius: 48,
+    zIndex: 2,
+    opacity: 0.95,
+  },
+  avatarTopLayerBase: {
+    backgroundColor: '#D7C4AE',
+  },
+  avatarBottomLayer: {
+    position: 'absolute',
+    top: 250,
+    left: '50%',
+    marginLeft: -55,
+    width: 110,
+    height: 160,
+    borderRadius: 26,
+    zIndex: 2,
+    opacity: 0.95,
+  },
+  avatarBottomLayerBase: {
+    backgroundColor: '#D7C4AE',
+  },
+  avatarLegs: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 208,
+    zIndex: 3,
+  },
+  avatarLeg: {
+    width: 44,
+    height: 170,
+    borderRadius: 24,
+    backgroundColor: '#D7C4AE',
+  },
+  avatarOuterBadge: {
+    position: 'absolute',
+    bottom: 8,
+    alignSelf: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    zIndex: 5,
+  },
+  avatarOuterBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  homeSelectionText: {
+    color: '#333',
+    fontWeight: '600',
+    fontSize: 12,
+    marginBottom: 8,
+  },
+  homePillRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
+    marginBottom: 20,
+  },
+  homePillButton: {
+    minWidth: 108,
+    height: 42,
+    borderRadius: 21,
+    paddingHorizontal: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#D9DEE7',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  homePillButtonPrimary: {
+    backgroundColor: '#003d7a',
+    borderColor: '#003d7a',
+  },
+  homePillText: {
+    color: '#334155',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  homePillTextActive: {
+    color: '#FFFFFF',
+  },
+  homeBottomPanel: {
+    height: 132,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 0,
+    paddingTop: 8,
+  },
+  homePocketItem: {
+    width: 98,
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  homePocketCircle: {
+    width: 74,
+    height: 74,
+    borderRadius: 37,
+    backgroundColor: '#F6F6F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  homePocketIcon: {
+    fontSize: 30,
+  },
+  homePocketName: {
+    color: '#111',
+    fontSize: 14,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  homeToast: {
+    position: 'absolute',
+    bottom: 142,
+    alignSelf: 'center',
+    backgroundColor: '#111',
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 999,
+  },
+  homeToastText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 12,
+  },
+  homeChatCloseButton: {
+    alignSelf: 'flex-start',
+  },
+  pressed: {
+    opacity: 0.6,
+  },
+  toast: {
+    position: 'absolute',
+    left: 18,
+    right: 18,
+    bottom: 88,
+    alignItems: 'center',
+    zIndex: 60,
+  },
+  toastText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'center',
+    backgroundColor: '#111',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+})
